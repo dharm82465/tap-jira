@@ -4,6 +4,8 @@ This module provides:
 - IssuesPaginator: paginator that generate next page URL from response links.
 """
 
+import string
+
 import requests
 from singer_sdk.pagination import BaseHATEOASPaginator
 

@@ -109,13 +109,9 @@ class TapJira(Tap):
     def discover_streams(self) -> Sequence[RESTStream[Any]]:
         """Return a list of discovered streams."""
         stream_list: list[JiraStream[Any]] = [
-            streams.UsersStream(self),
             streams.ProjectStream(self),
             streams.IssueStream(self),
             streams.Resolutions(self),
-            streams.IssueChangeLogStream(self),
-            streams.IssueComments(self),
-            streams.IssueWorklogs(self),
         ]
 
         return stream_list

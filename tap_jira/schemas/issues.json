@@ -45,6 +45,12 @@
         "string"
       ]
     },
+    "comments": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "properties": {
       "title": "Properties",
       "type": [

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -47,48 +46,6 @@ ADFRootBlockNode = ObjectType(
         ArrayType(ObjectType(additional_properties=True)),
     ),
 )
-
-
-class UsersStream(JiraStartAtPaginatedStream):
-    """Users stream.
-
-    https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-get
-    """
-
-    """
-    name: stream name
-    path: path which will be added to api url in client.py
-    schema: instream schema
-    primary_keys = primary keys for the table
-    replication_key = datetime keys for replication
-    """
-
-    name = "users"
-    path = "/user/search?username=."
-    primary_keys = ("key",)
-    replication_key = "key"
-    replication_method = "INCREMENTAL"
-    records_jsonpath = "$[*]"
-
-    @override
-    def get_next_page_token(
-        self,
-        response: requests.Response,
-        previous_token: int | None,
-    ) -> int | None:
-        """Return a token for identifying next page or None if no more pages."""
-        # If pagination is required, return a token which can be used to get the
-        #       next page. If this is the final page, return "None" to end the
-        #       pagination loop.
-        resp_json = response.json()
-        if previous_token is None:
-            previous_token = 0
-
-        page = resp_json
-        if len(page) == 0:
-            return None
-
-        return previous_token + len(page)
 
 
 class ProjectStream(JiraStartAtPaginatedStream):
@@ -221,22 +178,38 @@ class IssueStream(JiraStream[str]):
         dt = datetime.fromisoformat(updated)
         row["updated"] = dt.strftime("%Y-%m-%d %H:%M")
 
-        attachments = row.get("fields", {}).get("attachment", [])
-        contents: list[str] = []
-        for attachment in attachments:
-            url = attachment.get("content")
-            title = attachment.get("filename")
-            if url and title:
-                markdown_content = self.attachment_fetcher.fetch_attachment(
-                    url=url,
-                    title=title,
-                )
-                if markdown_content:
-                    contents.append(
-                        f"## File: [{title}]({url})\n### Content\n{markdown_content}",
+        attachments = row.get("fields", {}).get("attachment")
+        if attachments:
+            contents: list[str] = []
+            for attachment in attachments:
+                url = attachment.get("content")
+                title = attachment.get("filename")
+                if url and title:
+                    markdown_content = self.attachment_fetcher.fetch_attachment(
+                        url=url,
+                        title=title,
                     )
+                    if markdown_content:
+                        contents.append(
+                            f"## File: [{title}]({url})\n### Content\n{markdown_content}",
+                        )
 
-        row["attachments"] = "\n---\n".join(contents)
+            row["attachments"] = "\n---\n".join(contents)
+        else:
+            row["attachments"] = None
+        comments = row.get("fields", {}).get("comment")
+        if comments:
+            comment_contents: list[str] = []
+            for comment in comments.get("comments", []):
+                author = comment.get("author", {}).get("displayName", "Unknown Author")
+                body = comment.get("body", "")
+                created_at = comment.get("created", "")
+                comment_contents.append(
+                    f"## Comment by {author} at {created_at}\n{body}",
+                )
+            row["comments"] = "\n---\n".join(comment_contents)
+        else:
+            row["comments"] = None
         return row
 
     @override
@@ -272,109 +245,3 @@ class Resolutions(JiraStartAtPaginatedStream):
 
 
 # Child Streams
-
-
-class IssueChangeLogStream(JiraStartAtPaginatedStream):
-    """Issue Change Log.
-
-    https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-workflows/#api-rest-api-3-workflow-get
-    """
-
-    """
-    name: stream name
-    path: path which will be added to api url in client.py
-    schema: instream schema
-    primary_keys = primary keys for the table
-    replication_key = datetime keys for replication
-    records_jsonpath = json response body
-    """
-
-    name = "changelogs"
-
-    parent_stream_type = IssueStream
-
-    ignore_parent_replication_keys = True
-
-    path = "/issue/{issue_id}?expand=changelog"
-
-    replication_key = "created"
-
-    primary_keys = ("id",)
-
-    records_jsonpath = "$[changelog][histories][*]"
-
-    instance_name = "values"
-
-    @override
-    def post_process(self, row: Record, context: Context | None = None) -> Record:
-        """Post-process the record before it is returned."""
-        assert context is not None  # noqa: S101
-        row["issueId"] = context["issue_id"]
-        return row
-
-
-class IssueComments(JiraStartAtPaginatedStream):
-    """Issue Comments.
-
-    https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
-    """
-
-    """
-    name: stream name
-    path: path which will be added to api url in client.py
-    schema: instream schema
-    primary_keys = primary keys for the table
-    replication_key = datetime keys for replication
-    records_jsonpath = json response body
-    """
-
-    name = "issue_comments"
-
-    parent_stream_type = IssueStream
-
-    ignore_parent_replication_keys = True
-
-    path = "/issue/{issue_id}/comment"
-
-    primary_keys = ("id",)
-
-    records_jsonpath = "$[comments][*]"
-
-    instance_name = "comments"
-
-    @override
-    def post_process(self, row: Record, context: Context | None = None) -> Record:
-        """Post-process the record before it is returned."""
-        assert context is not None  # noqa: S101
-        row["issueId"] = context["issue_id"]
-        return row
-
-
-class IssueWorklogs(JiraStartAtPaginatedStream):
-    """Issue Worklogs.
-
-    https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/#api-rest-api-3-issue-issueidorkey-comment-get
-    """
-
-    """
-    name: stream name
-    path: path which will be added to api url in client.py
-    schema: instream schema
-    primary_keys = primary keys for the table
-    replication_key = datetime keys for replication
-    records_jsonpath = json response body
-    """
-
-    name = "worklogs"
-
-    parent_stream_type = IssueStream
-
-    ignore_parent_replication_keys = True
-
-    path = "/issue/{issue_id}/worklog"
-
-    primary_keys = ("id",)
-
-    records_jsonpath = "$[worklogs][*]"
-
-    instance_name = "worklogs"
