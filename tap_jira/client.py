@@ -49,8 +49,8 @@ class JiraStream(RESTStream[_TNextPageToken]):
     def authenticator(self) -> _Auth:
         """Stream authenticator."""
         return requests.auth.HTTPBasicAuth(
-            password=self.config["api_token"] or os.getenv("TAP_JIRA_API_TOKEN"),
-            username=self.config["email"],
+            password=self.config.get("api_token") or os.getenv("TAP_JIRA_API_TOKEN"),
+            username=self.config.get("email"),
         )
 
 
