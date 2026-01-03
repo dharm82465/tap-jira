@@ -49,7 +49,6 @@ class TapJira(Tap):
             "api_token",
             th.StringType,
             description="Jira API Token.",
-            required=True,
             secret=True,
             title="API Token",
         ),
