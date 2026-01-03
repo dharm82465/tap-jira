@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -48,7 +49,7 @@ class JiraStream(RESTStream[_TNextPageToken]):
     def authenticator(self) -> _Auth:
         """Stream authenticator."""
         return requests.auth.HTTPBasicAuth(
-            password=self.config["api_token"],
+            password=self.config["api_token"] or os.getenv("TAP_JIRA_API_TOKEN"),
             username=self.config["email"],
         )
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -110,7 +111,7 @@ class IssueStream(JiraStream[str]):
         self.attachment_fetcher = AttachmentFetcher(
             converter=self.converter,
             email=self.config.get("email"),
-            token=self.config.get("api_token"),
+            token=self.config.get("api_token") or os.getenv("TAP_JIRA_API_TOKEN"),
         )
 
     @override
