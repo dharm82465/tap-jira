@@ -12,7 +12,6 @@ keywords = [
 license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
-    "requests~=2.32.2",
     "typing-extensions~=4.15.0; python_version < '3.12'",
     "singer-sdk~=0.53.0",
     "docling",
