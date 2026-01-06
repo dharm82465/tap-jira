@@ -14,8 +14,7 @@ requires-python = ">=3.10"
 dependencies = [
     "requests~=2.32.2",
     "typing-extensions~=4.15.0; python_version < '3.12'",
-    "singer-sdk~=0.53.0",
-    "docling"
+    "singer-sdk~=0.53.0"
 ]
 optional-dependencies.s3 = [
     "s3fs==2025.10.0",
@@ -33,6 +32,14 @@ dev = [
 
 [tool.poetry]
 requires-poetry = ">=2.2.0"
+
+[[tool.poetry.source]]
+name = "pytorch_cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[tool.poetry.dependencies]
+docling = ">=2.66.0"
 
 [tool.mypy]
 strict = true
