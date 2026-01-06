@@ -12,9 +12,10 @@ keywords = [
 license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
+    "requests~=2.32.2",
     "typing-extensions~=4.15.0; python_version < '3.12'",
     "singer-sdk~=0.53.0",
-    "docling",
+    "docling"
 ]
 optional-dependencies.s3 = [
     "s3fs==2025.10.0",
@@ -32,6 +33,13 @@ dev = [
 
 [tool.poetry]
 requires-poetry = ">=2.2.0"
+
+
+[tool.poetry.dependencies]
+python = "^3.13"
+torch = [
+  {url = "https://download.pytorch.org/whl/torch/cpu"}
+]
 
 [tool.mypy]
 strict = true
@@ -62,7 +70,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 # CLI declaration
 tap-jira = 'tap_jira.tap:TapJira.cli'
-
-
-[tool.uv]
-extra-index-url = ["https://download.pytorch.org/whl/cpu"]

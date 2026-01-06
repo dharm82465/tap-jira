@@ -107,9 +107,8 @@ class IssueStream(JiraStream[str]):
     ) -> None:
         """Initialize the Issue stream with document converter and attachment fetcher."""
         super().__init__(tap, name, schema, path, http_method=http_method)
-        self.converter = DocumentConverter()
         self.attachment_fetcher = AttachmentFetcher(
-            converter=self.converter,
+            converter=DocumentConverter(),
             email=self.config.get("email"),
             token=self.config.get("api_token") or os.getenv("TAP_JIRA_API_TOKEN"),
         )
